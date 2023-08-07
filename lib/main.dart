@@ -48,9 +48,14 @@ class WallpaperScreen extends StatefulWidget {
 
 class _WallpaperScreenState extends State<WallpaperScreen> {
   final List<String> wallpaperUrls = [
-    'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8aHVtYW58ZW58MHx8MHx8fDA%3D&w=1000&q=80',
-    'https://images.unsplash.com/photo-1541963463532-d68292c34b19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Ym9va3xlbnwwfHwwfHx8MA%3D%3D&w=1000&q=80',
-    'https://images.unsplash.com/photo-1495344517868-8ebaf0a2044a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8MXx8fGVufDB8fHx8fA%3D%3D&w=1000&q=80',
+    'assets/Pic1.jpg', // Replace with your asset image paths
+    'assets/Pic2.jpg',
+    'assets/Pic3.jpg',
+    'assets/Pic4.jpg',
+    'assets/Pic5.jpg',
+    'assets/Pic6.jpg',
+    'assets/Pic7.jpg',
+    'assets/Pic8.jpg',
     // Add other URLs here...
   ];
 
@@ -97,7 +102,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
     try {
       // Use the screenshot package to capture the PageView with the wallpaper and text
       final image = await screenshotController.capture(
-        pixelRatio: MediaQuery.of(context).devicePixelRatio,
+        pixelRatio: 1.0,
         delay: Duration(milliseconds: 20),
       );
       return image;
@@ -187,26 +192,43 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
     );
 
     if (filePickerResult != null && filePickerResult.files.isNotEmpty) {
-      final file = File(filePickerResult.files.single.path!);
+      final platformFile = filePickerResult.files.first;
+      if (platformFile.path != null) {
+        // The selected file is picked using the file picker
+        final file = File(platformFile.path!);
 
-      final appDirectory = await getApplicationDocumentsDirectory();
-      final fileName = path.basename(file.path);
-      final localFilePath = path.join(appDirectory.path, fileName);
+        final appDirectory = await getApplicationDocumentsDirectory();
+        final fileName = path.basename(file.path);
+        final localFilePath = path.join(appDirectory.path, fileName);
 
-      // Copy the selected file to the application documents directory
-      await file.copy(localFilePath);
+        // Copy the selected file to the application documents directory
+        await file.copy(localFilePath);
 
-      setState(() {
-        uploadedFiles.add(localFilePath);
-        _selectedItemIndex = uploadedFiles.length - 1;
-        _pageController.animateToPage(
-          _selectedItemIndex,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      });
+        setState(() {
+          uploadedFiles.add(localFilePath);
+          _selectedItemIndex = wallpaperUrls.length + uploadedFiles.length - 1;
+          _pageController.animateToPage(
+            _selectedItemIndex,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        });
+      } else {
+        // The selected file is an asset image
+        final assetPath = platformFile.bytes!;
+        setState(() {
+          uploadedFiles.add('asset'); // Dummy value to indicate an asset image
+          _selectedItemIndex = wallpaperUrls.length + uploadedFiles.length - 1;
+          _pageController.animateToPage(
+            _selectedItemIndex,
+            duration: Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        });
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +272,11 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                               wallpaper.startsWith('http')
                                   ? CachedNetworkImage(
                                 imageUrl: wallpaper,
+                                fit: BoxFit.cover,
+                              )
+                                  : wallpaper.startsWith('asset')
+                                  ? Image.asset(
+                                wallpaper,
                                 fit: BoxFit.cover,
                               )
                                   : Image.file(
@@ -437,7 +464,6 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                   );
                 } else {
                   final wallpaper = allWallpapers[index];
-
                   return GestureDetector(
                     onTap: () {
                       setState(() {
@@ -473,6 +499,11 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                                 imageUrl: wallpaper,
                                 fit: BoxFit.cover,
                               )
+                                  : wallpaper.startsWith('asset')
+                                  ? Image.asset(
+                                wallpaper,
+                                fit: BoxFit.cover,
+                              )
                                   : Image.file(
                                 File(wallpaper),
                                 fit: BoxFit.cover,
@@ -499,7 +530,7 @@ class _WallpaperScreenState extends State<WallpaperScreen> {
                   );
                 }
               },
-            ),
+            )
           ),
         ],
       ),
